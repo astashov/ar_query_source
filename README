@@ -1,0 +1,12 @@
+Just a quick solution for understanding what is the source of the query in the logs.
+I.e. usual logs usually look like:
+
+  User Load (0.4ms)  SELECT `users`.* FROM `users` WHERE `users`.`id` = 2 LIMIT 1
+  Post Load (0.1ma)  SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id` = 2 LIMIT 1
+
+With the gem, they will look like:
+
+  User Load (0.4ms)  SELECT `users`.* FROM `users` WHERE `users`.`id` = 2 LIMIT 1
+app/controllers/users_controller.rb:34
+  Post Load (0.1ma)  SELECT `posts`.* FROM `posts` WHERE `posts`.`user_id` = 2 LIMIT 1
+app/models/user.rb:115
