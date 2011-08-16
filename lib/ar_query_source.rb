@@ -1,11 +1,14 @@
+require 'active_record/connection_adapters/mysql_adapter'
+
 module ArQuerySource
 
   IGNORED_QUERIES = /^show/i
-  attr_accessor :enabled
-  self.enabled = false
+  mattr_accessor :enabled
+  self.enabled = true
 
-  def get_first_line_from_app
-    caller.find { |l| l.match(/#{Rails.root}\/((?!vendor).)*$/) }
+  def self.get_first_line_from_app
+    line = caller.find { |l| l.match(/#{Rails.root}\/((?!vendor).)*$/) }
+    line.to_s.gsub(/#{Rails.root}\//, "")
   end
 
 end
@@ -16,16 +19,14 @@ module ActiveRecord
       private
 
       def execute_with_ar_query_source(sql, name = nil)
-        result = execute_without_analyzer(sql, name)
-        unless sql =~ ArQuerySource::IGNORED_QUERIES
-          if calling_line = ArQuerySource.get_first_line_from_app
-            calling_line.gsub!(/#{Rails.root}\//, "")
-            @logger.debug(display.to_s + "\n") if @logger
-          end
+        result = execute_without_ar_query_source(sql, name)
+        if ArQuerySource.enabled && sql !~ ArQuerySource::IGNORED_QUERIES
+          calling_line = ArQuerySource.get_first_line_from_app
+          @logger.debug(calling_line + "\n") if @logger && !calling_line.blank?
         end
         result
       end
-      # Always disable this in production unless you comment this out to do some testing
+
       alias_method_chain :execute, :ar_query_source
 
     end
